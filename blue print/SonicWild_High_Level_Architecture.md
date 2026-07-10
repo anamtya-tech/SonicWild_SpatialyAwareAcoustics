@@ -44,25 +44,42 @@ flowchart TB
 flowchart TB
     subgraph ROW1[ ]
         direction LR
-        PHONE[Mobile Hotspot Bridge - No Internet Required]
-        LAPTOP[Any Laptop as Bridge and for Viewing - No Internet Required]
+
+        subgraph HS_WRAP[ ]
+            PHONE[Mobile Hotspot Bridge - No Internet Required]
+        end
+
+        subgraph LP_WRAP[ ]
+            LAPTOP[Any Laptop as Bridge and for Viewing - No Internet Required]
+        end
+
         REC[Recorded Audio]
     end
 
-    VIEW[Any Device for Viewing - No Internet Required]
-    FE[Frontend Visualizer and Device Manager in Node.js + React]
+    subgraph VIEW_WRAP[ ]
+        VIEW[Any Device for Viewing - No Internet Required]
+    end
+
+    subgraph FE_WRAP[ ]
+        FE[Frontend Visualizer and Device Manager in Node.js + React]
+    end
 
     PHONE --> VIEW
     LAPTOP --> VIEW
+    REC --> VIEW
     VIEW --> FE
-    REC --> FE
 
     style PHONE fill:#ffadad,stroke:#c92a2a,stroke-width:2px,color:#111111
     style LAPTOP fill:#caffbf,stroke:#2f9e44,stroke-width:2px,color:#111111
     style VIEW fill:#fff3bf,stroke:#f08c00,stroke-width:2px,color:#111111
     style FE fill:#bde0fe,stroke:#1971c2,stroke-width:2px,color:#111111
     style REC fill:#4c74c9,stroke:#1d3557,stroke-width:2px,color:#ffffff
-    style ROW1 fill:#4a4e52,stroke:#4a4e52,stroke-width:1px,color:#ffffff
+
+    style HS_WRAP fill:#4a4e52,stroke:#4a4e52,stroke-width:1px,color:#ffffff
+    style LP_WRAP fill:#4a4e52,stroke:#4a4e52,stroke-width:1px,color:#ffffff
+    style VIEW_WRAP fill:#4a4e52,stroke:#4a4e52,stroke-width:1px,color:#ffffff
+    style FE_WRAP fill:#0b1220,stroke:#0b1220,stroke-width:1px,color:#ffffff
+    style ROW1 fill:#ffffff,stroke:#ffffff,stroke-width:0px,color:#111111
 ```
 
 ## Repository Links By Section
