@@ -59,34 +59,28 @@ flowchart TB
 ### 2) Software Responsibility Split (Edge Side vs Device Side)
 
 ```mermaid
-flowchart LR
-    subgraph EDGE_SIDE[Edge Side on Raspberry Pi]
-        subgraph ZODAS[Z_ODAS Processing Zone (~30% of Edge Software Area)]
-            ODAS_CORE[ODAS Core in C\nDirection of Arrival\nParticle/Localization Stream]
-            YAMNET_BOX[YAMNet/TFLite Module\n(~10% sub-area inside Z_ODAS)]
-            ODAS_CORE <--> YAMNET_BOX
-        end
-
-        PY[Python Control and Streaming Layer\nSettings Update\nAudio Stream Management\nFrontend Request Handling\nDrive Mount and Management]
-
-        ODAS_CORE <--> PY
-        YAMNET_BOX <--> PY
+flowchart TB
+    subgraph ROW1[ ]
+        direction LR
+        PHONE[Mobile Hotspot Bridge - No Internet Required]
+        LAPTOP[Any Laptop as Bridge and for Viewing - No Internet Required]
+        REC[Recorded Audio]
     end
 
-    subgraph DEVICE_SIDE[Device Side UI]
-        FE[Node.js + React Frontend\nLive Visualization\nFile Visualization\nDevice Management]
-    end
+    VIEW[Any Device for Viewing - No Internet Required]
+    FE[Frontend Visualizer and Device Manager in Node.js + React]
 
-    ODAS_CORE -->|Particle Data: timestamp, id, type, x/y/z, confidence| FE
-    PY <-->|Control Messages + Data Messages + Audio Streams| FE
+    PHONE --> VIEW
+    LAPTOP --> VIEW
+    VIEW --> FE
+    REC --> FE
 
-    style ZODAS fill:#fff3bf,stroke:#f59f00,stroke-width:2px,color:#111111
-    style ODAS_CORE fill:#ffd166,stroke:#e67700,stroke-width:3px,color:#111111
-    style YAMNET_BOX fill:#ff99c8,stroke:#c9184a,stroke-width:2px,color:#111111
-    style PY fill:#9bf6ff,stroke:#0077b6,stroke-width:2px,color:#111111
-    style FE fill:#a0c4ff,stroke:#3a0ca3,stroke-width:2px,color:#111111
-    style EDGE_SIDE fill:#f8f9fa,stroke:#495057,stroke-width:1px,color:#111111
-    style DEVICE_SIDE fill:#f8f9fa,stroke:#495057,stroke-width:1px,color:#111111
+    style PHONE fill:#ffadad,stroke:#c92a2a,stroke-width:2px,color:#111111
+    style LAPTOP fill:#caffbf,stroke:#2f9e44,stroke-width:2px,color:#111111
+    style VIEW fill:#fff3bf,stroke:#f08c00,stroke-width:2px,color:#111111
+    style FE fill:#bde0fe,stroke:#1971c2,stroke-width:2px,color:#111111
+    style REC fill:#4c74c9,stroke:#1d3557,stroke-width:2px,color:#ffffff
+    style ROW1 fill:#4a4e52,stroke:#4a4e52,stroke-width:1px,color:#ffffff
 ```
 
 ## Repository Links By Section
