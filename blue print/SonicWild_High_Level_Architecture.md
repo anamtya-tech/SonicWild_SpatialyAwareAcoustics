@@ -32,6 +32,15 @@ flowchart LR
     PHONE -. local bridge .- DEVICE
     LAPTOP -. local bridge .- DEVICE
     VIEWER -. local access .- DEVICE
+
+    style MIC fill:#7bdff2,stroke:#005f73,stroke-width:2px,color:#111111
+    style RPI fill:#b8f2a5,stroke:#2b9348,stroke-width:2px,color:#111111
+    style PWR fill:#ffd166,stroke:#e09f00,stroke-width:2px,color:#111111
+    style EDGE fill:#ffc6ff,stroke:#b5179e,stroke-width:2px,color:#111111
+    style DEVICE fill:#a0c4ff,stroke:#1d4ed8,stroke-width:2px,color:#111111
+    style PHONE fill:#ffadad,stroke:#c1121f,stroke-width:2px,color:#111111
+    style LAPTOP fill:#caffbf,stroke:#2d6a4f,stroke-width:2px,color:#111111
+    style VIEWER fill:#fdffb6,stroke:#8f6a00,stroke-width:2px,color:#111111
 ```
 
 ### 2) Software Responsibility Split (Edge Side vs Device Side)
@@ -47,43 +56,24 @@ flowchart LR
 
         PY[Python Control and Streaming Layer\nSettings Update\nAudio Stream Management\nFrontend Request Handling\nDrive Mount and Management]
 
-        ZODAS <--> PY
+        ODAS_CORE <--> PY
+        YAMNET_BOX <--> PY
     end
 
     subgraph DEVICE_SIDE[Device Side UI]
         FE[Node.js + React Frontend\nLive Visualization\nFile Visualization\nDevice Management]
     end
 
-    EDGE_SIDE -->|Particle Data: timestamp, id, type, x/y/z, confidence| DEVICE_SIDE
-    DEVICE_SIDE -->|Control Messages + Audio Requests + Data Messages| EDGE_SIDE
+    ODAS_CORE -->|Particle Data: timestamp, id, type, x/y/z, confidence| FE
+    PY <-->|Control Messages + Data Messages + Audio Streams| FE
 
-    classDef edge fill:#ffe9b3,stroke:#c27c00,stroke-width:2px,color:#1f1f1f;
-    classDef odas fill:#ffd166,stroke:#9a6700,stroke-width:3px,color:#111111;
-    classDef ai fill:#ff8fab,stroke:#a4133c,stroke-width:2px,color:#111111;
-    classDef py fill:#8ecae6,stroke:#005f73,stroke-width:2px,color:#111111;
-    classDef device fill:#bde0fe,stroke:#1d3557,stroke-width:2px,color:#111111;
-
-    class EDGE_SIDE edge;
-    class ZODAS,ODAS_CORE odas;
-    class YAMNET_BOX ai;
-    class PY py;
-    class DEVICE_SIDE,FE device;
-```
-
-### 3) Interface Message View (Who Sends What)
-
-```mermaid
-flowchart LR
-    ODAS_STREAM[ODAS Core\nParticle Stream]
-    YAMNET_STREAM[YAMNet/TFLite\nClassification Stream]
-    PY_BUS[Python Runtime Bus]
-    FE_APP[Frontend App\nNode.js + React]
-
-    ODAS_STREAM -->|x/y/z + confidence + tracking ids| PY_BUS
-    YAMNET_STREAM -->|acoustic class + score| PY_BUS
-    PY_BUS -->|merged telemetry + status| FE_APP
-    FE_APP -->|settings update + control commands| PY_BUS
-    FE_APP -->|audio/file actions| PY_BUS
+    style ZODAS fill:#fff3bf,stroke:#f59f00,stroke-width:2px,color:#111111
+    style ODAS_CORE fill:#ffd166,stroke:#e67700,stroke-width:3px,color:#111111
+    style YAMNET_BOX fill:#ff99c8,stroke:#c9184a,stroke-width:2px,color:#111111
+    style PY fill:#9bf6ff,stroke:#0077b6,stroke-width:2px,color:#111111
+    style FE fill:#a0c4ff,stroke:#3a0ca3,stroke-width:2px,color:#111111
+    style EDGE_SIDE fill:#f8f9fa,stroke:#495057,stroke-width:1px,color:#111111
+    style DEVICE_SIDE fill:#f8f9fa,stroke:#495057,stroke-width:1px,color:#111111
 ```
 
 ## Repository Links By Section
@@ -99,6 +89,10 @@ flowchart LR
 ### Frontend and Visualization Context
 - Current architecture workspace: [SonicWild_SpatialyAwareAcoustics](https://github.com/anamtya-tech/SonicWild_SpatialyAwareAcoustics)
 - Source slide used for this rewrite: [blue print/Sonicwild Block Diagram.pptx](https://github.com/anamtya-tech/SonicWild_SpatialyAwareAcoustics/blob/main/blue%20print/Sonicwild%20Block%20Diagram.pptx)
+
+### Ongoing Research and Validation
+- Repository: [SonicWild_Yammnet](https://github.com/anamtya-tech/SonicWild_Yammnet)
+- Repository: [SonicWild_Simulator](https://github.com/anamtya-tech/SonicWild_Simulator)
 
 ## Section Explanations
 
