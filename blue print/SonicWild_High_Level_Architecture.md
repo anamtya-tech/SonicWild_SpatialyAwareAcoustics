@@ -7,40 +7,49 @@ This document reformats the high-level architecture into a professional, impleme
 ### 1) System Line Diagram (Hardware + Software Placement)
 
 ```mermaid
-flowchart LR
-    subgraph HW[Hardware Layer]
-        MIC[ReSpeaker USB Mic Array]
-        RPI[Raspberry Pi 3B]
-        PWR[Power Bank]
-        MIC -->|USB Audio| RPI
-        RPI --- PWR
+flowchart TB
+    subgraph TOP[Device]
+        direction LR
+
+        subgraph HW[HW]
+            direction LR
+            MIC((ReSpeaker USB 4-Mic Array)) -->|Micro USB -> USB Cable| RPI[Raspberry Pi 3B]
+            RPI --> PWR[Power Bank]
+        end
+
+        subgraph SW[SW]
+            direction TB
+            SW1[1. Z_ODAS: C code for direction calculation and audio processing]
+            SW2[2. Python: settings update, audio streaming, frontend requests, drive management]
+            SW3[3. TFLite: models and libraries for C integration]
+            SW4[4. Frontend visualizer and device manager in Node.js + React]
+        end
     end
 
-    subgraph ACCESS[User Access Layer]
-        PHONE[Mobile Hotspot Bridge\nNo Internet Required]
-        LAPTOP[Any Laptop as Bridge\nNo Internet Required]
-        VIEWER[Any Device for Viewing\nNo Internet Required]
+    subgraph USER[User]
+        direction LR
+        PHONE[Mobile hotspot bridge\nNo internet required]
+        OR[OR]
+        LAPTOP[Any laptop as bridge and for viewing\nNo internet required]
+        VIEW[Any device for viewing\nNo internet required]
     end
 
-    subgraph SW[Software Layer]
-        EDGE[Edge Side\nSignal Processing + Control + AI]
-        DEVICE[Device Side\nFrontend Visualizer + Device Manager]
-    end
+    RPI -. local bridge .-> PHONE
+    RPI -. local bridge .-> LAPTOP
+    PHONE -. local access .-> VIEW
+    LAPTOP -. local access .-> VIEW
 
-    RPI --> EDGE
-    EDGE --> DEVICE
-    PHONE -. local bridge .- DEVICE
-    LAPTOP -. local bridge .- DEVICE
-    VIEWER -. local access .- DEVICE
-
-    style MIC fill:#7bdff2,stroke:#005f73,stroke-width:2px,color:#111111
-    style RPI fill:#b8f2a5,stroke:#2b9348,stroke-width:2px,color:#111111
-    style PWR fill:#ffd166,stroke:#e09f00,stroke-width:2px,color:#111111
-    style EDGE fill:#ffc6ff,stroke:#b5179e,stroke-width:2px,color:#111111
-    style DEVICE fill:#a0c4ff,stroke:#1d4ed8,stroke-width:2px,color:#111111
-    style PHONE fill:#ffadad,stroke:#c1121f,stroke-width:2px,color:#111111
-    style LAPTOP fill:#caffbf,stroke:#2d6a4f,stroke-width:2px,color:#111111
-    style VIEWER fill:#fdffb6,stroke:#8f6a00,stroke-width:2px,color:#111111
+    style MIC fill:#6ea8fe,stroke:#1d4ed8,stroke-width:2px,color:#111111
+    style RPI fill:#8fd694,stroke:#2b8a3e,stroke-width:2px,color:#111111
+    style PWR fill:#ffd43b,stroke:#e67700,stroke-width:2px,color:#111111
+    style SW1 fill:#d0ebff,stroke:#1971c2,stroke-width:1.5px,color:#111111
+    style SW2 fill:#d0ebff,stroke:#1971c2,stroke-width:1.5px,color:#111111
+    style SW3 fill:#d0ebff,stroke:#1971c2,stroke-width:1.5px,color:#111111
+    style SW4 fill:#d0ebff,stroke:#1971c2,stroke-width:1.5px,color:#111111
+    style PHONE fill:#ffadad,stroke:#c92a2a,stroke-width:2px,color:#111111
+    style LAPTOP fill:#caffbf,stroke:#2f9e44,stroke-width:2px,color:#111111
+    style VIEW fill:#fff3bf,stroke:#f08c00,stroke-width:2px,color:#111111
+    style OR fill:#ffffff,stroke:#495057,stroke-width:1.5px,color:#111111
 ```
 
 ### 2) Software Responsibility Split (Edge Side vs Device Side)
