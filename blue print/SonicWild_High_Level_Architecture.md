@@ -9,51 +9,33 @@ This document reformats the high-level architecture into a professional, impleme
 ```mermaid
 flowchart TB
     subgraph EDGE[EDGE]
-        direction LR
+        direction TB
 
         subgraph HW[HW]
             direction LR
-            MIC((ReSpeaker USB 4-Mic Array)) -->|Micro USB -> USB Cable| RPI[Raspberry Pi 3B]
+            MIC((ReSpeaker USB 4-Mic Array)) --> CABLE[Micro USB -> USB Cable]
+            CABLE --> RPI[Raspberry Pi 3B]
             RPI --> PWR[Power Bank]
         end
 
         subgraph SW[SW]
-            direction TB
+            direction LR
             SW1[1. Z_ODAS: C code for direction calculation and audio processing]
             SW2[2. Python: settings update, audio streaming, frontend requests, drive management]
             SW3[3. TFLite: models and libraries for C integration]
         end
     end
 
-    subgraph USER[User Access]
-        direction LR
-        PHONE[Mobile Hotspot Bridge - No Internet Required]
-        LAPTOP[Any Laptop as Bridge and for Viewing - No Internet Required]
-        VIEW[Any Device for Viewing - No Internet Required]
-    end
-
-    FRONTEND[Frontend Visualizer and Device Manager in Node.js + React]
-
-    RPI -. local bridge .-> PHONE
-    RPI -. local bridge .-> LAPTOP
-    PHONE -. local access .-> VIEW
-    LAPTOP -. local access .-> VIEW
-    PHONE --> FRONTEND
-    FRONTEND --> VIEW
-
-    style EDGE fill:#fff4cc,stroke:#f59f00,stroke-width:2px,color:#111111
-    style HW fill:#e6fcf5,stroke:#0ca678,stroke-width:1.5px,color:#111111
-    style SW fill:#edf2ff,stroke:#364fc7,stroke-width:1.5px,color:#111111
-    style MIC fill:#74c0fc,stroke:#1864ab,stroke-width:2px,color:#111111
-    style RPI fill:#b2f2bb,stroke:#2b8a3e,stroke-width:2px,color:#111111
-    style PWR fill:#ffd43b,stroke:#e67700,stroke-width:2px,color:#111111
-    style SW1 fill:#d0ebff,stroke:#1971c2,stroke-width:1.5px,color:#111111
-    style SW2 fill:#d0ebff,stroke:#1971c2,stroke-width:1.5px,color:#111111
-    style SW3 fill:#d0ebff,stroke:#1971c2,stroke-width:1.5px,color:#111111
-    style PHONE fill:#ffadad,stroke:#c92a2a,stroke-width:2px,color:#111111
-    style LAPTOP fill:#caffbf,stroke:#2f9e44,stroke-width:2px,color:#111111
-    style VIEW fill:#fff3bf,stroke:#f08c00,stroke-width:2px,color:#111111
-    style FRONTEND fill:#bde0fe,stroke:#1971c2,stroke-width:2px,color:#111111
+    style EDGE fill:#efe7c7,stroke:#111827,stroke-width:2px,color:#ffffff
+    style HW fill:#cfe8e3,stroke:#22b8a8,stroke-width:1.5px,color:#111111
+    style SW fill:#dbe0ef,stroke:#6b7aa8,stroke-width:1.5px,color:#111111
+    style MIC fill:#69b3f2,stroke:#1c6fb8,stroke-width:2px,color:#111111
+    style CABLE fill:#495057,stroke:#212529,stroke-width:1.5px,color:#ffffff
+    style RPI fill:#b2f2bb,stroke:#2b8a3e,stroke-width:1.5px,color:#111111
+    style PWR fill:#ffd43b,stroke:#e67700,stroke-width:1.5px,color:#111111
+    style SW1 fill:#b7d4f3,stroke:#4f8fca,stroke-width:1.5px,color:#111111
+    style SW2 fill:#b7d4f3,stroke:#4f8fca,stroke-width:1.5px,color:#111111
+    style SW3 fill:#b7d4f3,stroke:#4f8fca,stroke-width:1.5px,color:#111111
 ```
 
 ### 2) Software Responsibility Split (Edge Side vs Device Side)
