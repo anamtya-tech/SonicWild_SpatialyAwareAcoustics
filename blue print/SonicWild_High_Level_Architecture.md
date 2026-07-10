@@ -4,7 +4,7 @@
 
 This document reformats the high-level architecture into a professional, implementation-oriented view.
 
-### 1) ASCII Block Diagram
+### 1) System Line Diagram (Hardware + Software Placement)
 
 ```text
 +------------------------------------------------------------------------------------+
@@ -23,6 +23,21 @@ This document reformats the high-level architecture into a professional, impleme
 |  | [3. TFLite: models and libraries for C integration]                          | |
 |  +-------------------------------------------------------------------------------+ |
 +------------------------------------------------------------------------------------+
+```
+
+### 2) Software Responsibility Split (Edge Side vs Device Side)
+
+```text
+[Mobile Hotspot Bridge]   [Laptop Bridge Device]   [Recorded Audio Input Stream]
+         \                        |                           /
+          \                       |                          /
+           +----------------------+-------------------------+
+                                  |
+                                  v
+                    [Any Device for Viewing - No Internet Required]
+                                  |
+                                  v
+        [On-Device Frontend: Visualizer + Device Manager (Node.js + React)]
 ```
 
 ## Repository Links By Section
