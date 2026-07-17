@@ -127,7 +127,7 @@ Chatak Node ──TCP:9000──► server.js ──Socket.IO──► React UI
                                                        ▼
                                               Three.js spacital sphere
                                               Leaflet 2D map
-                                              LightningChart spectrogram
+                                              Spectrogram Renderer
 ```
 
 ---
@@ -257,8 +257,10 @@ App.tsx   ← Sets up all global "wrappers" (Providers) + URL routing
       /dashboard            → Dashboard.tsx         (overview)
       /device-connection    → DeviceConnection.tsx  (explicit route alias)
       /setup                → Setup.tsx             (deployment/setup wizard)
-      /project-setup/list   → ProjectListPage.tsx
       /project-setup/dashboard → ProjectDashboardPageAdvanced.tsx
+
+      ///Legacy Pages:
+      /project-setup/list   → ProjectListPage.tsx
       /live                 → LiveTriangulationAdvanced.tsx (main live view)
       /live-monitoring      → LiveMonitoring.tsx    (monitoring view)
       /live-triangulation   → LiveTriangulationAdvanced.tsx
@@ -489,7 +491,7 @@ Use it to:
 - do bulk updates across connected nodes
 - manage Wi-Fi, ODAS config file selection, mic location, and archive access per device
 
-The Devices area is where interns should look first for:
+The Devices Area: 
 - SSH flows
 - `/sync-values`
 - `/updateSettings`
@@ -750,7 +752,6 @@ SonicWild uses BOTH:
 | State management | **TanStack Query** | Caches API responses, auto-refetches |
 | URL routing | **React Router** | Handles /live, /setup, etc. |
 | spacital rendering | **Three.js** | WebGL spacital — renders the sound hemisphere |
-| Spectrograms | **LightningChart JS** | High-performance real-time charts |
 | 2D Maps | **Leaflet** | Interactive maps (offline capable) |
 | Online Maps | **Google Maps API** | When internet available |
 | Icons | **Lucide** | Clean icon set |
@@ -1007,9 +1008,7 @@ cd frontend && npm test
 | **Vite** | Modern, very fast build tool for React apps |
 | **shadcn/ui** | Pre-built React UI components (buttons, cards, dialogs, etc.) |
 | **TanStack Query** | Library that manages API data fetching, caching, and automatic refresh |
-| **Three.js** | JavaScript library for spacital graphics in the browser (used for hemisphere) |
-| **LightningChart** | High-performance charting library (used for spectrogram) |
-| **Leaflet** | Open-source 2D map library with offline support |
+| **Three.js** | JavaScript library for spacital graphics in the browser (used for hemisphere) || **Leaflet** | Open-source 2D map library with offline support |
 | **Spectrogram** | Visual representation of sound frequencies over time (colorful heatmap) |
 | **Meta Fusion Server** | C++ process on ports 9090/9091 that combines data from multiple nodes |
 | **HashRouter** | React Router using `#` in URLs (e.g., `localhost:8080/#/live`) |
@@ -1033,7 +1032,7 @@ cd frontend && npm test
 
 ## 19. Month-over-Month Changes
 
-This section gives interns a quick timeline of major changes from actual git commit history.
+This section gives a quick timeline of major changes from actual git commit history.
 It is intended as a lightweight orientation aid, not an exhaustive changelog.
 
 ### 2026-07

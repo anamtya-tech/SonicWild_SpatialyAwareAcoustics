@@ -170,11 +170,13 @@ SonicWild_Ship/
 │   │   ├── pages/               # Route-level page components
 │   │   │   ├── DeviceConnection.tsx    # Device discovery & management
 │   │   │   ├── Setup.tsx               # Project setup wizard (4-step / 3-step)
-│   │   │   ├── LiveMonitoring.tsx      # Live acoustic monitoring (main page)
-│   │   │   ├── LiveVisualization.tsx   # spacital visualization view
-│   │   │   ├── ArchiveViewer.tsx       # Archive browsing & playback
 │   │   │   ├── Dashboard.tsx           # Overview dashboard
 │   │   │   ├── ProjectDashboardPage.tsx
+│   │   │   
+            Legacy Pages:
+            ├── LiveMonitoring.tsx      # Live acoustic monitoring (main page)
+│   │   │   ├── LiveVisualization.tsx   # spacital visualization view
+│   │   │   ├── ArchiveViewer.tsx       # Archive browsing & playback
 │   │   │   ├── ProjectListPage.tsx
 │   │   │   ├── DeviceManagement.tsx
 │   │   │   ├── DeviceSettingsPage.tsx
@@ -241,7 +243,33 @@ The **entry point** for every session. Researchers discover and connect to Chata
 - **Device Interrogation**: Reads live status from `/home/chatak/ChatakGUI/config/` on the hardware — including `deviceId.txt`, `project_name.txt`, `record.txt`, `pause.txt`
 - **Connection Persistence**: Successful IPs cached in `src/ssh_success.json`
 
-### 5.2 Setup / Project Wizard (`Setup.tsx` — 106KB)
+
+### 5.2 Project Management (`ProjectListPage.tsx`, `ProjectDashboardPage.tsx`)
+- List and CRUD for research projects
+- Each project stores: name, description, base GPS, linked mic locations, settings
+- Per-project dashboard with stats
+
+### 5.3 Device Management & Settings (`DeviceManagement.tsx`, `DeviceSettingsPage.tsx`)
+- Manage per-device configurations
+- Update SSH credentials, recording windows, network settings
+- Device health monitorin
+
+
+### 5.4 Dashboard (`Dashboard.tsx`)
+**Overview screen** showing:
+- Active projects summary
+- Connected device count and statuses
+- Recent activity log
+- Quick navigation to key workflows
+g
+
+
+
+## ################################################################################
+Legay Pages
+## ################################################################################
+
+### 5.5 Setup / Project Wizard (`Setup.tsx` — 106KB)
 The **configuration hub** — where researchers define their deployment before going live.
 
 **Live Session (4-Step Wizard):**
@@ -261,7 +289,7 @@ The **configuration hub** — where researchers define their deployment before g
 - Recording window (`recordMin`) and pause cycle (`pauseMin`)
 - Project name and site description
 
-### 5.3 Live Monitoring (`LiveMonitoring.tsx` — 65KB)
+### 5.6 Live Monitoring (`LiveMonitoring.tsx` — 65KB)
 The **primary operational screen** used every day in the field.
 
 **Features:**
@@ -275,7 +303,7 @@ The **primary operational screen** used every day in the field.
 - **Device Controls**: Start/stop recording, push config updates, view device telemetry
 - **Triangulated Position**: Overlay showing the calculated spacital position of a dominant sound source computed from multiple sensors
 
-### 5.4 Archive Viewer (`ArchiveViewer.tsx`)
+### 5.7 Archive Viewer (`ArchiveViewer.tsx`)
 For **post-deployment analysis** — reviewing what was recorded.
 
 **Features:**
@@ -283,23 +311,6 @@ For **post-deployment analysis** — reviewing what was recorded.
 - Stream or download archives
 - Synchronized playback with spectrogram and spacital visualization
 - Recent files list with quick-access
-
-### 5.5 Dashboard (`Dashboard.tsx`)
-**Overview screen** showing:
-- Active projects summary
-- Connected device count and statuses
-- Recent activity log
-- Quick navigation to key workflows
-
-### 5.6 Project Management (`ProjectListPage.tsx`, `ProjectDashboardPage.tsx`)
-- List and CRUD for research projects
-- Each project stores: name, description, base GPS, linked mic locations, settings
-- Per-project dashboard with stats
-
-### 5.7 Device Management & Settings (`DeviceManagement.tsx`, `DeviceSettingsPage.tsx`)
-- Manage per-device configurations
-- Update SSH credentials, recording windows, network settings
-- Device health monitoring
 
 ### 5.8 Classifier Management (`ManageClassifierPage.tsx`)
 - Upload TFLite AI models (BirdNET, custom species classifiers) to Chatak nodes
