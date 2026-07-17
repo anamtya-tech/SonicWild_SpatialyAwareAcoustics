@@ -1,5 +1,5 @@
-# 🦜 SonicWild — Intern Onboarding Guide
-> **For:** New SWE Interns joining the SonicWild project  
+# 🦜 SonicWild
+> **For:** Collaborators/New SWE Interns joining the SonicWild project  
 > **Goal:** Understand everything about this application — what it does, how it's built, and how all the pieces connect — in simple language.
 
 ---
@@ -156,8 +156,13 @@ These are the physical devices placed in the forest.
 │  /home/chatak/ChatakGUI/config/     │
 │  ├── deviceId.txt    (unique ID)    │
 │  ├── project_name.txt               │
-│  ├── record.txt      (recording?)   │
-│  └── pause.txt       (duty cycle)   │
+│  ├── record.txt      (record mins)  │
+│  ├── pause.txt       (pause mins)   │
+│  ├── wake.txt        (wake time)    │
+│  ├── sleep.txt       (sleep time)   │
+│  ├── latlong.txt     (location)     │
+│  ├── passive_config.txt (ODAS cfg)  │
+│  └── mac_id.txt      (device MAC)   │
 └─────────────────────────────────────┘
 
 Default SSH Login:
@@ -177,7 +182,7 @@ ODAS (Open embeddeD Audition System) is free open-source software running ON the
 
 ## 5. The Backend
 
-**File:** [`server.js`](file:///c:/SonicWild_Ship%20(3)/SonicWild_Ship/server.js) — 3,131 lines, 120KB — the backbone of everything.
+**File:** `server.js` — about 4,077 lines and 147KB — the backbone of everything.
 
 ### What server.js does:
 
@@ -187,10 +192,11 @@ server.js responsibilities:
 │                                                     │
 │  1. REST API (Express on port 3000)                 │
 │     • /sync-values → SSH to device, read config    │
-│     • /projects → CRUD for research projects       │
-│     • /mic-locations → save GPS coordinates        │
+│     • /updateSettings → push settings via SSH      │
+│     • /list-odas-config-files → list remote cfgs   │
+│     • /save-mic-location → persist GPS coordinates │
 │     • /api/devices → discover devices on network   │
-│     • /archive/list → list recordings on device    │
+│     • /projects, /mic-locations → SQLite CRUD      │
 │                                                     │
 │  2. TCP Listener (per device, port 8081+)           │
 │     • Opens raw TCP socket to listen to ODAS data  │
@@ -204,7 +210,7 @@ server.js responsibilities:
 │  4. SSH Bridge (node-ssh)                           │
 │     • Connects to Chatak nodes                      │
 │     • Reads/writes config files                     │
-│     • Runs shell commands remotely                  │
+│     • Starts/stops ODAS/audio workflows remotely    │
 │                                                     │
 │  5. Network Scanner (via src/scanner.js)            │
 │     • Pings every IP on local subnet                │
@@ -216,17 +222,19 @@ server.js responsibilities:
 ### Supporting backend files:
 | File | What it does |
 |------|-------------|
-| [`main.js`](file:///c:/SonicWild_Ship%20(3)/SonicWild_Ship/main.js) | Electron entry — launches server.js and opens the browser window |
-| [`preload.js`](file:///c:/SonicWild_Ship%20(3)/SonicWild_Ship/preload.js) | Bridge between Electron and React (security layer) |
-| [`database_manager.js`](file:///c:/SonicWild_Ship%20(3)/SonicWild_Ship/database_manager.js) | Reads and writes the flat-file database |
-| [`src/scanner.js`](file:///c:/SonicWild_Ship%20(3)/SonicWild_Ship/src/scanner.js) | Network device discovery (ping sweep) |
-| [`src/interrogateDevice.js`](file:///c:/SonicWild_Ship%20(3)/SonicWild_Ship/src/interrogateDevice.js) | SSH into devices to verify they're Chatak nodes |
+| `main.js` | Electron entry — launches backend and opens the desktop window |
+| `preload.js` | Electron security bridge for renderer access |
+| `database.js` | Primary SQLite runtime using `better-sqlite3` |
+| `database_manager.js` | Legacy TXT database helper retained for compatibility |
+| `src/scanner.js` | Network device discovery (ping sweep + SSH interrogation) |
+| `src/scanner-api.js` | SSE wrapper around scanner/discovery |
+| `src/interrogateDevice.js` | SSH helpers to verify Chatak devices |
 
 ---
 
 ## 6. The Frontend
 
-**Location:** [`frontend/src/`](file:///c:/SonicWild_Ship%20(3)/SonicWild_Ship/frontend/src/)
+**Location:** `frontend/src/`
 
 The frontend is a **React 18 + TypeScript** app built with Vite. Think of it as a very complex web app running inside Electron.
 
@@ -244,14 +252,20 @@ App.tsx   ← Sets up all global "wrappers" (Providers) + URL routing
     ├── HashRouter             → URL navigation (#/live, #/setup, etc.)
     │
     └── Routes (URL → Page mapping):
-        /                     → DeviceConnection.tsx  (home screen)
-        /setup                → Setup.tsx             (configure project)
-        /live                 → LiveTriangulationAdvanced.tsx (main live view)
-        /live-monitoring      → LiveMonitoring.tsx    (monitoring view)
-        /archive              → ArchiveViewer.tsx     (browse recordings)
-        /dashboard            → Dashboard.tsx         (overview)
-        /project-setup/list   → ProjectListPage.tsx
-        /manage-classifier    → ManageClassifierPage.tsx
+      /                     → DeviceConnection.tsx  (home screen)
+      /device/:ip           → DeviceSettingsPage.tsx (per-device settings)
+      /dashboard            → Dashboard.tsx         (overview)
+      /device-connection    → DeviceConnection.tsx  (explicit route alias)
+      /setup                → Setup.tsx             (deployment/setup wizard)
+      /project-setup/list   → ProjectListPage.tsx
+      /project-setup/dashboard → ProjectDashboardPageAdvanced.tsx
+      /live                 → LiveTriangulationAdvanced.tsx (main live view)
+      /live-monitoring      → LiveMonitoring.tsx    (monitoring view)
+      /live-triangulation   → LiveTriangulationAdvanced.tsx
+      /live-triangulation-advanced → LiveTriangulationAdvanced.tsx
+      /archive              → ArchiveViewer.tsx     (browse recordings)
+      /manage-classifier    → ManageClassifierPage.tsx
+      *                     → NotFound.tsx          (catch-all)
 ```
 
 ### Services (how frontend talks to backend):
@@ -260,7 +274,8 @@ App.tsx   ← Sets up all global "wrappers" (Providers) + URL routing
 frontend/src/services/
 ├── api.ts              → Makes HTTP calls to server.js (GET/POST/DELETE)
 ├── socket.ts           → Socket.IO connection for real-time track/pot data
-└── visualizationSocket.ts → Second socket for triangulation visualization
+├── visualizationSocket.ts → Dedicated visualization socket helpers
+└── dataSimulator.ts    → Local/mock data support for development
 ```
 
 ### Hooks (reusable logic shared across pages):
@@ -269,8 +284,10 @@ frontend/src/services/
 frontend/src/hooks/
 ├── useRealTimeData.ts      → Subscribes to track_info & pot_info events
 ├── useTriangulationData.ts → Subscribes to triangulatedPosition events
-├── useDeviceManagement.ts  → Manages connected device list
-└── useSoundLines.ts        → Converts ODAS data to map lines
+├── useDeviceManagement.ts  → Manages connected device list and settings actions
+├── useSoundLines.ts        → Converts ODAS data to map lines
+├── use-mobile.tsx          → Responsive/mobile helper
+└── use-toast.ts            → Toast notification helper
 ```
 
 ### Key Visualization Libraries:
@@ -279,8 +296,6 @@ frontend/src/hooks/
 Three.js      → spacital sphere showing sound in X/Y/Z space
                (the "sound bubble" hemisphere)
 
-LightningChart → Real-time spectrogram (frequency heatmap)
-               (the colorful waterfall chart)
 
 Leaflet       → 2D interactive map with offline tile support
                (the map showing mic positions + sound rays)
@@ -301,9 +316,9 @@ Recharts      → Time-series charts and statistics graphs
 🍓 Chatak Node (Raspberry Pi)
    ODAS captures from 4 mics simultaneously
    Beamforming math → figures out direction
-   Output: { src: [{x:0.7, y:0.3, z:0.6, activity:0.85}] }
+   Output: { src: [{id:55,tag:real,x:0.7, y:0.3, z:0.6, activity:0.85,class:frog,conf:0.45}] }
          │
-         │  TCP connection (raw bytes, port 9000)
+         │  TCP connection (raw bytes, port 3000)
          │  Continuous stream, ~60 updates/second
          ▼
 💻 server.js (TCP Listener)
@@ -316,7 +331,7 @@ Recharts      → Time-series charts and statistics graphs
    Emits "track_info" event to all connected frontends
    Emits "pot_info" event for potential sources
          │
-         │  WebSocket connection (port 3000)
+         │  WebSocket connection (port 9002/9003)
          ▼
 ⚛️ React Frontend
    useRealTimeData hook receives the events
@@ -355,16 +370,17 @@ DeviceConnection.tsx
 ### Flow C: Push Settings to Device
 
 ```
-👆 User changes "Record for 30 minutes" setting in UI
+👆 User changes recording/config settings in UI
          │
          ▼
-POST /updateSettings { ip, recordMin: 30, pauseMin: 5 }
+POST /updateSettings { ip, recordMin, pauseMin, wakeTime, sleepTime, ... }
          │
          ▼
 server.js uses node-ssh:
    Connects to device via SSH (chatak@192.168.1.x)
-   Writes new value to /home/chatak/ChatakGUI/config/record.txt
-   Restarts the recording service on the device
+   Calls /home/chatak/ChatakGUI/update_settings.py
+   Updates config TXT files and optional passive_config.txt
+   Preserves selected values when optional args are marked KEEP
          │
          ▼
 ✅ Device is now recording with new settings
@@ -374,63 +390,38 @@ server.js uses node-ssh:
 
 ## 8. The Database
 
-SonicWild uses a **simple flat-file database** — no MySQL, no MongoDB. Just a text file!
+SonicWild now runs primarily on **SQLite** using `better-sqlite3`.
 
-**File:** `zodas_database.txt`  
-**Manager:** [`database_manager.js`](file:///c:/SonicWild_Ship%20(3)/SonicWild_Ship/database_manager.js)
+**Primary file:** `zodas.db`  
+**Runtime manager:** `database.js`  
+**Legacy helper:** `database_manager.js`
+
+Current SQLite schema includes tables such as:
 
 ```
-📄 zodas_database.txt looks like this:
-
-[metadata]
-{"version": "1.0", "schema": "sonicwild-v1"}
-
-[projects]
-[
-  {
-    "id": "1716900000000",
-    "name": "Dhurandhar Forest Site",
-    "description": "Monsoon frog survey 2026",
-    "baseLocation": { "lat": 21.1, "lng": 79.0 }
-  }
-]
-
-[micLocations]
-[
-  {
-    "id": "mic_001",
-    "name": "Node A - Riverbank",
-    "lat": 21.101,
-    "lng": 79.001,
-    "deviceId": "chatak-01",
-    "projectId": "1716900000000"
-  }
-]
-
-[deviceConfigs]
-[
-  {
-    "ip": "192.168.1.101",
-    "userId": "chatak",
-    "password": "chatak",
-    "recordMin": "30",
-    "pauseMin": "5"
-  }
-]
+projects
+sublocations
+devices
+device_config
+mic_locations
+monitoring_sessions
+audio_files
+inference_results
+app_metadata
 ```
 
-> **Note:** There's also a `zodas.db` SQLite file for a newer migration, but the primary active database is the flat text file.
+> **Note:** `zodas_database.txt` still exists as a legacy artifact/reference, but current backend runtime operates in SQLite mode.
 
 ### Where is it stored?
-- **Development:** project root folder
-- **Production (installed app):** `%APPDATA%/SonicWild/zodas_database.txt`
+- **Development:** project root / user data path as `zodas.db`
+- **Production (installed app):** writable app data path resolved by `SONICWILD_USER_DATA`
 
 ---
 
 ## 9. Every Page Explained
 
 ### 🔌 Page 1: Device Connection (`/`)
-**File:** [`DeviceConnection.tsx`](file:///c:/SonicWild_Ship%20(3)/SonicWild_Ship/frontend/src/pages/DeviceConnection.tsx) (53KB)
+**File:** `frontend/src/pages/DeviceConnection.tsx`
 
 ```
 PURPOSE: Find and connect to Chatak hardware nodes on the network
@@ -461,23 +452,18 @@ PURPOSE: Find and connect to Chatak hardware nodes on the network
 ---
 
 ### ⚙️ Page 2: Setup Wizard (`/setup`)
-**File:** [`Setup.tsx`](file:///c:/SonicWild_Ship%20(3)/SonicWild_Ship/frontend/src/pages/Setup.tsx) (56KB)
+**File:** `frontend/src/pages/Setup.tsx`
 
 ```
 PURPOSE: Define your research deployment before going live
 
-Two modes:
+This screen is no longer best understood as a standalone wizard.
+In the current frontend, the app is organized around **two major navigation links**:
 
-LIVE SESSION (4 steps):        PASSIVE SESSION (3 steps):
-Step 1: Kit & Coverage         Step 1: Grid Setup
-   ↓ place hotspot on map         ↓ auto-calculate center
-Step 2: Mic Placement          Step 2: Deployment Schedule
-   ↓ drag mics to positions       ↓ set duty cycle (e.g., 10min/hour)
-Step 3: Session Config         Step 3: Confirm & Deploy
-   ↓ choose species target
-Step 4: Confirm & Launch
-   ↓ push settings to devices
-```
+1. **Devices**
+2. **Projects**
+
+The old “many primary pages” model is outdated. Most important workflows now branch from one of these two entry points.
 
 **Key data this page saves:**
 - Base camp GPS (where the laptop is)
@@ -488,11 +474,53 @@ Step 4: Confirm & Launch
 
 ---
 
-### 📡 Page 3: Live Triangulation (`/live`)
-**File:** [`LiveTriangulationAdvanced.tsx`](file:///c:/SonicWild_Ship%20(3)/SonicWild_Ship/frontend/src/pages/LiveTriangulationAdvanced.tsx) (102KB — the BIGGEST file!)
+### 📱 Current Navigation Model
+
+#### 1. Devices (`/` and `/device-connection`)
+**Primary files:** `frontend/src/pages/DeviceConnection.tsx`, `frontend/src/pages/DeviceSettingsPage.tsx`, `frontend/src/components/DevicePopup.tsx`
+
+This is the **hardware-facing** side of the app.
+
+Use it to:
+- discover Chatak nodes on the network
+- connect over SSH
+- open the per-device popup for live control and monitoring
+- open the per-device settings page
+- do bulk updates across connected nodes
+- manage Wi-Fi, ODAS config file selection, mic location, and archive access per device
+
+The Devices area is where interns should look first for:
+- SSH flows
+- `/sync-values`
+- `/updateSettings`
+- live device health and telemetry
+- popup-driven audio/ODAS controls
+
+#### 2. Projects (`/project-setup/list`)
+**Primary files:** `frontend/src/pages/ProjectListPage.tsx`, `frontend/src/pages/ProjectDashboardPageAdvanced.tsx`, `frontend/src/pages/Setup.tsx`
+
+This is the **deployment and planning** side of the app.
+
+Use it to:
+- create and delete projects
+- manage project sublocations
+- define deployment geometry and map context
+- connect mics to sublocations
+- move into live or recorded workflows from a project context
+
+Projects now act as the organizer for most field operations. The older guide’s “independent page list” is less useful than understanding that **projects define context**, while **devices execute and report**.
+
+---
+
+### 📡 Project-Driven Live Views
+
+Once a project or sublocation is selected, the app launches one of the monitoring/analysis views below.
+
+#### Live Triangulation (`/live`, `/live-triangulation`, `/live-triangulation-advanced`)
+**File:** `frontend/src/pages/LiveTriangulationAdvanced.tsx`
 
 ```
-PURPOSE: The MAIN screen — shows live spacital sound positions in real time
+PURPOSE: Primary live spatial monitoring screen for project-linked deployments
 
 ┌─────────────────────────────────────────────────────────┐
 │                    LIVE TRIANGULATION                    │
@@ -516,92 +544,106 @@ PURPOSE: The MAIN screen — shows live spacital sound positions in real time
 └─────────────────────────────────────────────────────────┘
 ```
 
-**What the colors mean:**
+Key behaviors:
 - 🔵 **Blue rays** = **Tracks** (stable, confirmed sound sources — ODAS is confident)
 - 🔴 **Red rays** = **Pots** (potential / noisy / brief detections — less confident)
+- consumes live device streams and triangulated positions
+- shows map-based spatial context plus real-time acoustic visualization
 
 ---
 
-### 📊 Page 4: Live Monitoring (`/live-monitoring`)
-**File:** [`LiveMonitoring.tsx`](file:///c:/SonicWild_Ship%20(3)/SonicWild_Ship/frontend/src/pages/LiveMonitoring.tsx) (68KB)
+#### Live Monitoring (`/live-monitoring`)
+**File:** `frontend/src/pages/LiveMonitoring.tsx`
 
 ```
-PURPOSE: Detailed monitoring view — more device controls, audio streaming
+PURPOSE: Operational live-observation screen for mic-centric monitoring, streaming, and triangulation review
 
 Features:
-• Per-device spacital hemisphere ("sound bubble")
-• Live audio streaming (hear the actual forest audio!)
-• Device controls (start/stop recording)
-• Real-time time-series charts
-• Device telemetry (battery, temp, network signal)
+• Loads deployed mic/base-camp context from saved project/device state
+• Shows 2D map with live rays and optional triangulation points
+• Supports per-mic 3D viewer launch/stop
+• Supports live audio streaming from a selected device
+• Includes spectrogram/audio controls and triangulation test mode helpers
+• Shows device telemetry such as battery, signal, memory, and online state
 ```
 
 ---
 
-### 📁 Page 5: Archive Viewer (`/archive`)
-**File:** [`ArchiveViewer.tsx`](file:///c:/SonicWild_Ship%20(3)/SonicWild_Ship/frontend/src/pages/ArchiveViewer.tsx) (15KB)
+#### Archive Viewer (`/archive`)
+**File:** `frontend/src/pages/ArchiveViewer.tsx`
 
 ```
-PURPOSE: Browse and download recordings stored on devices
+PURPOSE: Archive-analysis surface for replay-style visualization of recorded sessions
 
-┌──────────────────────────────────────────┐
-│  ARCHIVE VIEWER                          │
-│                                          │
-│  Device: chatak-01                       │
-│  ┌─────────────────────────────────────┐ │
-│  │ 📄 recording_2026-06-01_08h.wav    │ │
-│  │ 📄 recording_2026-06-01_09h.wav    │ │
-│  │ 📄 recording_2026-06-01_10h.wav    │ │
-│  └─────────────────────────────────────┘ │
-│                                          │
-│  [▶ Play]  [⬇ Download]  [📊 Spectrogram]│
-└──────────────────────────────────────────┘
+Current state in code:
+• lets the user choose project, device, and recording label from UI controls
+• provides playback-style controls (play, pause, seek/slider)
+• renders archived tracks/pots into the SoundHemisphere view
+• includes chart/control sidebars for archive inspection
+• currently uses placeholder/mock recording lists and simulated archived data derived from current track/pot state
 
-Files are fetched over SSH from the Raspberry Pi storage.
+Important note:
+• The richer SSH-driven archive management flow exists elsewhere in the codebase (for example in popup/archive manager components), while `ArchiveViewer.tsx` itself is currently a lighter archive playback UI rather than the full remote-file browser described in older docs.
 ```
 
 ---
 
-### 📋 Page 6: Dashboard (`/dashboard`)
-**File:** [`Dashboard.tsx`](file:///c:/SonicWild_Ship%20(3)/SonicWild_Ship/frontend/src/pages/Dashboard.tsx) (21KB)
+#### Dashboard (`/dashboard`)
+**File:** `frontend/src/pages/Dashboard.tsx`
 
 ```
 PURPOSE: Quick overview of everything
 
 Shows:
-• How many devices are connected
-• Active project name
-• Recent detections summary
-• Quick links to main workflows
+• high-level project/device snapshot
+• quick navigation back into major workflows
+• summary-style operational context
 ```
 
 ---
 
-### 📁 Page 7: Project Management (`/project-setup/list`)
-**Files:** [`ProjectListPage.tsx`](file:///c:/SonicWild_Ship%20(3)/SonicWild_Ship/frontend/src/pages/ProjectListPage.tsx), [`ProjectDashboardPageAdvanced.tsx`](file:///c:/SonicWild_Ship%20(3)/SonicWild_Ship/frontend/src/pages/ProjectDashboardPageAdvanced.tsx)
+### Project Management Screens
+
+#### Project List (`/project-setup/list`)
+**File:** `frontend/src/pages/ProjectListPage.tsx`
 
 ```
-PURPOSE: Organize work into named projects
+PURPOSE: Entry point for the Projects side of the app
 
-• List all research projects (e.g., "Dhurandhar Survey 2026")
-• Create / Edit / Delete projects
-• Each project links to specific mic locations
-• Per-project dashboard with statistics
+• List all projects
+• Create new project records
+• Open a selected project dashboard
+• Delete stale project records
 ```
 
 ---
 
-### 🤖 Page 8: Manage Classifiers (`/manage-classifier`)
-**File:** [`ManageClassifierPage.tsx`](file:///c:/SonicWild_Ship%20(3)/SonicWild_Ship/frontend/src/pages/ManageClassifierPage.tsx) (13KB)
+#### Project Dashboard (`/project-setup/dashboard`)
+**File:** `frontend/src/pages/ProjectDashboardPageAdvanced.tsx`
 
 ```
-PURPOSE: Upload AI models to Chatak devices
+PURPOSE: Main project operations hub
 
-• Upload BirdNET or custom TFLite models (.tflite files)
-• Deploy models to specific devices via SSH
-• Track which model version is on which device
-• Status: Partially implemented (planned for v1.2)
+• Manage sublocations within a project
+• Configure live vs recorded deployment contexts
+• Link microphones to sublocations
+• Launch live monitoring from a chosen sublocation
+• Maintain project-level deployment geometry and map context
 ```
+
+
+```
+PURPOSE: Guided deployment configuration screen used within the Projects workflow
+
+• place base camp / hotspot context
+• set microphone positions on map
+• define project-linked session parameters
+• prepare device-side settings before live or recorded operation
+```
+
+---
+
+
 
 ---
 
@@ -724,6 +766,7 @@ Base URL: `http://localhost:3000`
 |--------|-----|-------------|
 | POST | `/sync-values` | SSH into device, read current settings |
 | POST | `/updateSettings` | Push new settings to device via SSH |
+| POST | `/list-odas-config-files` | List `.cfg` files on a remote device |
 | POST | `/run-command` | Execute shell command on device |
 | GET | `/api/devices` | SSE stream — discover devices on network |
 
@@ -761,7 +804,7 @@ Base URL: `http://localhost:3000`
 ## 13. How to Run the App (Dev Mode)
 
 ```bash
-# Step 1: Install root (backend) dependencies
+# Step 1: Install root (backend/Electron) dependencies
 npm install
 
 # Step 2: Install frontend dependencies
@@ -772,12 +815,12 @@ cd ..
 # Step 3: Start the backend (runs on port 3000)
 node server.js
 
-# Step 4: Start the frontend dev server (runs on port 8080)
+# Step 4: Start the frontend dev server
 cd frontend
 npm run dev
 
-# Step 5: Open browser
-# http://localhost:8080
+# Step 5: If you want the backend-served production bundle refreshed
+# npm run build:frontend
 ```
 
 ### Ports to know:
@@ -793,14 +836,14 @@ npm run dev
 ## 14. File Map — Where is what?
 
 ```
-SonicWild_Ship/
+SonicWild-3DEcoAcoustic_makparjdev/
 │
 │  ── BACKEND ──
 ├── main.js                  ← Electron start — opens the window
 ├── preload.js               ← Security bridge (Electron ↔ React)
 ├── server.js                ← ⭐ THE BRAIN — all backend logic
-├── database_manager.js      ← Reads/writes zodas_database.txt
-├── database.js              ← SQLite alternative (newer)
+├── database.js              ← Primary SQLite runtime
+├── database_manager.js      ← Legacy TXT compatibility helper
 ├── src/
 │   ├── scanner.js           ← Finds Chatak devices on WiFi
 │   ├── scanner-api.js       ← SSE wrapper for scanner
@@ -819,57 +862,51 @@ SonicWild_Ship/
 │   │   └── socket.ts        ← Socket.IO connection
 │   ├── hooks/
 │   │   ├── useRealTimeData.ts  ← Listens for tracks/pots
-│   │   └── useTriangulationData.ts ← Listens for spacital positions
+│   │   ├── useTriangulationData.ts ← Listens for spacital positions
+│   │   ├── useDeviceManagement.ts  ← Device management helper
+│   │   └── useSoundLines.ts        ← Map line conversion helper
 │   ├── pages/              ← One file = one screen
 │   │   ├── DeviceConnection.tsx   ← Home / connect screen
+│   │   ├── DeviceSettingsPage.tsx ← Per-device settings screen
 │   │   ├── Setup.tsx              ← Project wizard
 │   │   ├── LiveTriangulationAdvanced.tsx ← MAIN LIVE SCREEN
 │   │   ├── LiveMonitoring.tsx     ← Monitoring screen
+│   │   ├── ProjectListPage.tsx    ← Project list
+│   │   ├── ProjectDashboardPageAdvanced.tsx ← Project dashboard
 │   │   └── ArchiveViewer.tsx      ← Browse recordings
 │   └── components/
 │       ├── DevicePopup.tsx        ← Per-device control panel
 │       ├── spectrogram.tsx        ← Frequency chart
-│       ├── visualization/
-│       │   ├── SphereVisualizer.tsx ← spacital hemisphere (Three.js)
-│       │   └── MapViewer.tsx        ← 2D Leaflet map
+│       ├── terrain/               ← OfflineLeafMap and map helpers
+│       ├── visualization/         ← Viewer widgets and charts
 │       └── layout/
 │           └── Layout.tsx           ← App shell (sidebar + content)
 │
 │  ── DATABASE ──
-├── zodas_database.txt       ← Main database (projects, mics, devices)
-├── zodas.db                 ← SQLite (newer, migration target)
+├── zodas.db                 ← Active SQLite database
+├── zodas_database.txt       ← Legacy TXT format reference
 │
 │  ── DOCS ──
 ├── README.md
-├── SONICWILD_MASTER_CONTEXT.md    ← Deep technical doc
-├── CODEBASE_REFERENCE.md          ← Complete code reference
-└── SYSTEM_INTEGRATION.md
+├── docs/intern/SONICWILD_MASTER_CONTEXT.md    ← Deep technical doc
+├── docs/intern/SONICWILD_INTERN_GUIDE.md      ← Intern onboarding guide
+└── docs/intern/SONICWILD_KNOWLEDGE_BASE_FOR_RAG.md
 ```
 
 ---
 
 ## 15. Git & Branching
 
-### Current branches:
+### Working with branches:
 ```bash
 git branch -a
-
-# Main active branch:
-dev                          ← Where daily development happens
-
-# Production ready:
-release-v1.1-live-export     ← Production-ready branch
-
-# Safe restore points (tags):
-v1.1-working-may29           ← ✅ Everything worked on May 29, 2026
-v1.1-stable                  ← Earlier stable point
 ```
 
 ### How to work as an intern:
 ```bash
-# Always start from dev branch
-git checkout dev
-git pull origin dev
+# Start from the branch your team is actively using
+git branch --show-current
+git pull
 
 # Create your own branch for your task
 git checkout -b feature/your-feature-name
@@ -881,16 +918,7 @@ git commit -m "feat: what you did"
 # Push your branch
 git push origin feature/your-feature-name
 
-# Ask for review — never push directly to dev or release
-```
-
-### If something breaks, restore to working state:
-```bash
-# View safe snapshot
-git checkout v1.1-working-may29
-
-# Make a new branch from it to fix issues
-git checkout -b fix/restore-working v1.1-working-may29
+# Ask for review — avoid pushing directly to shared long-lived branches unless requested
 ```
 
 ---
@@ -990,16 +1018,16 @@ cd frontend && npm test
 
 ---
 
-> **You've read the intern guide! 🎉**
+> **You've read the guide! 🎉**
 > 
 > **Next steps:**
 > 1. Run the app in dev mode (Section 13)
-> 2. Explore [`LiveTriangulationAdvanced.tsx`](file:///c:/SonicWild_Ship%20(3)/SonicWild_Ship/frontend/src/pages/LiveTriangulationAdvanced.tsx) — the main screen
-> 3. Read [`server.js`](file:///c:/SonicWild_Ship%20(3)/SonicWild_Ship/server.js) top-to-bottom (the heart of the backend)
+> 2. Explore `frontend/src/pages/LiveTriangulationAdvanced.tsx` — the main screen
+> 3. Read `server.js` top-to-bottom (the heart of the backend)
 > 4. Ask a question when something doesn't make sense!
 
 ---
-*SonicWild Intern Guide — Written June 2026; refreshed July 2026*
+
 
 ---
 
