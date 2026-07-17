@@ -39,14 +39,14 @@ Imagine you're a wildlife researcher deep in a tropical forest. You've placed 4 
 │                                                         │
 │   🌳  Forest Environment                               │
 │                                                         │
-│   🎙️ Mic Node A         🎙️ Mic Node B                │
+│   🎙️ Mic Node A         🎙️ Mic Node B                  │
 │         \                    /                          │
-│          \    🦜 Bird       /                           │
+│          \    🦜 Bird       /                          │
 │           \   Sound Here  /                             │
 │            \_____________/                              │
 │                   │                                     │
-│                   ↓ (WiFi)                              │
-│          💻 SonicWild Laptop                            │
+│                   ↓ (WiFi HotSpot- no internet)         │
+│          💻 SonicWild Laptop                           │
 │          Shows: "Sound at 45°, 20m high, NE direction"  │
 │                                                         │
 └─────────────────────────────────────────────────────────┘
@@ -89,10 +89,10 @@ SonicWild runs as **4 layers stacked together**:
 ╔══════════════════════════════════════════════════════════╗
 ║  LAYER 1: HARDWARE (in the forest)                       ║
 ║                                                          ║
-║  🍓 Chatak Node (Raspberry Pi)                          ║
+║  🍓 SonicWild Node (Raspberry Pi)                        ║
 ║   • 4-microphone array attached                          ║
 ║   • Runs ODAS software (beamforming math)                ║
-║   • Sends sound data via TCP over WiFi                   ║
+║   • Sends sound data over WiFi - hotspot (no internet)   ║
 ║   • Accessible via SSH for config/control                ║
 ╠══════════════════════════════════════════════════════════╣
 ║  LAYER 2: BACKEND (server.js — Node.js)                  ║
@@ -121,7 +121,7 @@ SonicWild runs as **4 layers stacked together**:
 ### How they connect:
 
 ```
-Chatak Node ──TCP:9000──► server.js ──Socket.IO──► React UI
+SonicWild Node ──TCP:9000──► server.js ──Socket.IO──► React UI
                 │                                      │
                 └──SSH──► config files                 │
                                                        ▼
@@ -315,7 +315,7 @@ Recharts      → Time-series charts and statistics graphs
 🎙️ Forest Sound (e.g., bird call)
          │
          ▼
-🍓 Chatak Node (Raspberry Pi)
+🍓 SonicWild Node (Raspberry Pi)
    ODAS captures from 4 mics simultaneously
    Beamforming math → figures out direction
    Output: { src: [{id:55,tag:real,x:0.7, y:0.3, z:0.6, activity:0.85,class:frog,conf:0.45}] }
@@ -453,7 +453,7 @@ PURPOSE: Find and connect to Chatak hardware nodes on the network
 
 ---
 
-### ⚙️ Page 2: Setup Wizard (`/setup`)
+### ⚙️ Page 2: Setup Wizard (`/setup - Legacy Page`)
 **File:** `frontend/src/pages/Setup.tsx`
 
 ```
@@ -524,26 +524,26 @@ Once a project or sublocation is selected, the app launches one of the monitorin
 ```
 PURPOSE: Primary live spatial monitoring screen for project-linked deployments
 
-┌─────────────────────────────────────────────────────────┐
-│                    LIVE TRIANGULATION                    │
-│                                                          │
+┌────────────────────────────────────────────────────────┐
+│                    LIVE TRIANGULATION                  │
+│                                                        │
 │  ┌───────────────────┐  ┌──────────────────────────┐   │
-│  │                   │  │    spacital HEMISPHERE          │   │
-│  │   2D MAP          │  │                           │   │
-│  │   (Leaflet/GMaps) │  │    [sphere diagram]       │   │
-│  │                   │  │    Elevation 0-90°         │   │
-│  │  🎙️──────►  (blue ray = track)                  │   │
+│  │                   │  │    spacital HEMISPHERE   │   │
+│  │   2D MAP          │  │                          │   │
+│  │   (Leaflet/GMaps) │  │    [sphere diagram]      │   │
+│  │                   │  │    Elevation 0-90°       │   │
+│  │  🎙️──────►  (blue ray = track)                 │   │
 │  │  🎙️ ···►    (red ray = pot)                    │   │
-│  │                   │  │    Azimuth 0-360°          │   │
+│  │                   │  │    Azimuth 0-360°        │   │
 │  └───────────────────┘  └──────────────────────────┘   │
-│                                                          │
+│                                                        │
 │  ┌─────────────────────────────────────────────────┐   │
 │  │  SPECTROGRAM (frequency heatmap 0-20kHz)        │   │
 │  │  [colorful waterfall chart going right in time] │   │
 │  └─────────────────────────────────────────────────┘   │
-│                                                          │
-│  Devices: [chatak-01 🟢] [chatak-02 🟢]  [⏸ Pause]   │
-└─────────────────────────────────────────────────────────┘
+│                                                        │
+│  Devices: [Node-01 🟢] [Node-02 🟢]  [⏸ Pause]   │
+└────────────────────────────────────────────────────────┘
 ```
 
 Key behaviors:
@@ -563,7 +563,7 @@ PURPOSE: Operational live-observation screen for mic-centric monitoring, streami
 Features:
 • Loads deployed mic/base-camp context from saved project/device state
 • Shows 2D map with live rays and optional triangulation points
-• Supports per-mic 3D viewer launch/stop
+• Supports per-mic hemishpehe viewer launch/stop
 • Supports live audio streaming from a selected device
 • Includes spectrogram/audio controls and triangulation test mode helpers
 • Shows device telemetry such as battery, signal, memory, and online state
