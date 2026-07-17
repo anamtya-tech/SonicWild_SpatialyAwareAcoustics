@@ -9,7 +9,7 @@
 1. [What is SonicWild? (The Big Picture)](#1-what-is-sonicwild)
 2. [The Problem It Solves](#2-the-problem-it-solves)
 3. [System Architecture — How all layers connect](#3-system-architecture)
-4. [The Hardware — Chatak Nodes](#4-the-hardware--chatak-nodes)
+4. [The Hardware — SonicWild Nodes](#4-the-hardware--SonicWild-nodes)
 5. [The Backend — server.js explained](#5-the-backend)
 6. [The Frontend — React App explained](#6-the-frontend)
 7. [How Data Flows — End to End](#7-how-data-flows-end-to-end)
